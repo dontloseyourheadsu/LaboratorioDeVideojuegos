@@ -21,6 +21,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 
 using GameEngineLab.ShadowHell.Features.Environment.Resources;
+using GameEngineLab.ShadowHell.Features.Enemy.Resources;
 
 namespace GameEngineLab.ShadowHell;
 
@@ -68,6 +69,8 @@ public sealed class ShadowHellGame : Game
             Zoom = 1.0f
         });
 
+        _world.SetResource(new WaveState());
+
         // 2. Setup ECS Schedulers
         // Floor Renderer (runs first under everything)
         _scheduler.AddSystem(new FloorRendererSystem());
@@ -102,6 +105,9 @@ public sealed class ShadowHellGame : Game
 
         // Bullet project updates and rendering
         _scheduler.AddSystem(new BulletSystem());
+
+        // Wave management and spawning
+        _scheduler.AddSystem(new WaveSystem());
 
         // 3. Generate Level (Cavern boundary & rocky pillars)
         GenerateCavernLevel();
@@ -171,39 +177,6 @@ public sealed class ShadowHellGame : Game
             Mass = 0f,
             CollisionGroup = 1
         });
-
-        // Spawn shadow enemies (4 Melee, 3 Ranged)
-        for (int i = 0; i < 7; i++)
-        {
-            Vector2 position;
-            bool ok;
-            int attempts = 0;
-            do
-            {
-                position = new Vector2(random.Next(150, (int)WorldWidth - 150), random.Next(150, (int)WorldHeight - 150));
-                ok = Vector2.Distance(position, new Vector2(WorldWidth / 2f, WorldHeight / 2f)) > 300f;
-                attempts++;
-            } while (!ok && attempts < 100);
-
-            EnemyType type = (i < 4) ? EnemyType.Melee : EnemyType.Ranged;
-            float speed = (type == EnemyType.Melee) ? 65f : 80f;
-
-            var enemy = _world.CreateEntity();
-            _world.SetComponent(enemy, new EnemyComponent(type, speed));
-            _world.SetComponent(enemy, new TransformComponent { Position = position });
-            _world.SetComponent(enemy, new VelocityComponent { Value = Vector2.Zero });
-            _world.SetComponent(enemy, new DrawColorComponent(Color.Black));
-            _world.SetComponent(enemy, new RigidBodyComponent
-            {
-                Shape = RigidBodyShape.Circle,
-                BoundingRadius = 20f,
-                Mass = 1.2f,
-                Restitution = 0.3f,
-                Friction = 0.9f,
-                CollisionGroup = 2, // Shadow enemies (casts shadows!)
-                CollisionMask = 1 | 4 // collides with walls and player
-            });
-        }
 
     }
 
