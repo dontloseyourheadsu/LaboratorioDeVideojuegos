@@ -36,6 +36,13 @@ public sealed class PlayerAttackSystem : IGameSystem
         player.JustAttacked = false;
         world.SetComponent(playerEntity, player);
 
+        // Apply a small forward lunge to the player on attack trigger!
+        if (world.TryGetComponent<VelocityComponent>(playerEntity, out var playerVelocity))
+        {
+            playerVelocity.Value += player.AttackDirection * 160f;
+            world.SetComponent(playerEntity, playerVelocity);
+        }
+
         Vector2 playerPos = playerTransform.Position;
         float attackRange = 65f;
 
