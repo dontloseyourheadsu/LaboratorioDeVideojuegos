@@ -342,6 +342,32 @@ public sealed class ShadowHellGame : Game
                 // Subtitle
                 _spriteBatch.DrawString(_font, "Android Roguelike Techbed - testing build", new Vector2(30, 60), Color.Gray, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
 
+                // Fetch WaveState
+                int waveNum = 0;
+                int remaining = 0;
+                float nextWaveTimer = 0f;
+                bool isWaveActive = false;
+                if (_world.TryGetResource<WaveState>(out var waveState) && waveState != null)
+                {
+                    waveNum = waveState.CurrentWave;
+                    remaining = waveState.EnemiesRemaining;
+                    nextWaveTimer = waveState.NextWaveTimer;
+                    isWaveActive = waveState.IsWaveActive;
+                }
+
+                // Draw Wave State
+                string waveText = $"WAVE: {waveNum}";
+                string enemiesText = isWaveActive ? $"SHADOWS: {remaining}" : (nextWaveTimer > 0f ? $"NEXT WAVE IN {nextWaveTimer:F1}s" : "PREPARING...");
+                Color waveColor = new Color(220, 120, 255); // Neon violet
+                Color enemiesColor = isWaveActive ? new Color(255, 100, 0) : Color.Yellow * 0.8f;
+
+                // Draw Wave Info
+                _spriteBatch.DrawString(_font, waveText, new Vector2(32, 92), Color.Black * 0.5f, 0f, Vector2.Zero, 1.2f, SpriteEffects.None, 0f);
+                _spriteBatch.DrawString(_font, waveText, new Vector2(30, 90), waveColor, 0f, Vector2.Zero, 1.2f, SpriteEffects.None, 0f);
+
+                _spriteBatch.DrawString(_font, enemiesText, new Vector2(32, 122), Color.Black * 0.5f, 0f, Vector2.Zero, 0.9f, SpriteEffects.None, 0f);
+                _spriteBatch.DrawString(_font, enemiesText, new Vector2(30, 120), enemiesColor, 0f, Vector2.Zero, 0.9f, SpriteEffects.None, 0f);
+
                 // Instructions
                 string controls = "CONTROLS:\nWASD / Arrows - Move\nSpace / Left Shift - Dodge Roll (Smooth Hover)\nF / E / Left Click - Close Range Melee Attack";
                 _spriteBatch.DrawString(_font, controls, new Vector2(30, WindowHeight - 120), Color.LightGray * 0.8f, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
