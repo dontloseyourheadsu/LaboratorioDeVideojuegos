@@ -51,6 +51,12 @@ public sealed class EnemySystem : IGameSystem
             world.TryGetComponent<VelocityComponent>(entityId, out var velocity);
             world.TryGetComponent<RigidBodyComponent>(entityId, out var body);
 
+            if (enemy.Health <= 0f)
+            {
+                world.DestroyEntity(entityId);
+                continue;
+            }
+
             enemy.AnimTime += dt;
 
             Vector2 direction = playerPos - transform.Position;
@@ -190,6 +196,39 @@ public sealed class EnemySystem : IGameSystem
             ShapeRenderer.DrawCircle(frameContext.SpriteBatch, frameContext.DebugPixel, eyePos, 4f, eyeColor);
             // Draw eye glow
             ShapeRenderer.DrawCircle(frameContext.SpriteBatch, frameContext.DebugPixel, eyePos, 8f, eyeColor * 0.45f);
+
+            // Draw Enemy Health Bar
+            if (enemy.Health < enemy.MaxHealth && enemy.Health > 0f)
+            {
+                float barWidth = 24f;
+                float barHeight = 4f;
+                Vector2 barPos = transform.Position + new Vector2(0f, -body.BoundingRadius - 10f);
+                float percent = MathHelper.Clamp(enemy.Health / enemy.MaxHealth, 0f, 1f);
+
+                // Red background (representing missing health)
+                ShapeRenderer.DrawRectangle(
+                    frameContext.SpriteBatch,
+                    frameContext.DebugPixel,
+                    barPos,
+                    new Vector2(barWidth, barHeight),
+                    Color.Red * 0.6f
+                );
+
+                // Green foreground (representing remaining health)
+                float healthWidth = barWidth * percent;
+                if (healthWidth > 0f)
+                {
+                    // Draw centered green bar offset based on percent
+                    Vector2 greenCenter = barPos + new Vector2((healthWidth - barWidth) / 2f, 0f);
+                    ShapeRenderer.DrawRectangle(
+                        frameContext.SpriteBatch,
+                        frameContext.DebugPixel,
+                        greenCenter,
+                        new Vector2(healthWidth, barHeight),
+                        Color.Green
+                    );
+                }
+            }
         }
     }
 }
