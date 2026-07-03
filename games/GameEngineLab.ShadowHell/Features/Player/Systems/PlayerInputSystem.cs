@@ -33,6 +33,15 @@ public sealed class PlayerInputSystem : IGameSystem
                 player.InvincibilityTimer -= dt;
             }
 
+            if (player.AttackTimer > 0f)
+            {
+                player.AttackTimer -= dt;
+            }
+            if (player.AttackCooldownTimer > 0f)
+            {
+                player.AttackCooldownTimer -= dt;
+            }
+
             // 1. Standing constraint: The player NEVER rotates (Isaac-style)
             transform.Rotation = 0f;
 
@@ -93,12 +102,27 @@ public sealed class PlayerInputSystem : IGameSystem
                 if (player.MovementDirection != Vector2.Zero)
                 {
                     player.State = PlayerState.Walking;
-                    velocity.Value = player.MovementDirection * player.NormalSpeed;
+                    float speedMult = player.AttackTimer > 0f ? 0.40f : 1f;
+                    velocity.Value = player.MovementDirection * player.NormalSpeed * speedMult;
                 }
                 else
                 {
                     player.State = PlayerState.Idle;
                     velocity.Value = Vector2.Zero;
+                }
+
+                // Trigger Attack
+                bool attackJustPressed = (kState.IsKeyDown(Keys.F) && prevKState.IsKeyUp(Keys.F)) ||
+                                         (kState.IsKeyDown(Keys.E) && prevKState.IsKeyUp(Keys.E)) ||
+                                         (frameContext.CurrentMouse.LeftButton == ButtonState.Pressed && frameContext.PreviousMouse.LeftButton == ButtonState.Released);
+
+                if (attackJustPressed && player.State != PlayerState.Rolling && player.AttackCooldownTimer <= 0f)
+                {
+                    player.AttackTimer = player.AttackDuration;
+                    player.AttackCooldownTimer = player.AttackCooldown;
+                    player.AttackDirection = player.MovementDirection != Vector2.Zero ? player.MovementDirection : 
+                        new Vector2(player.FacingRight ? 1f : -1f, 0f);
+                    player.JustAttacked = true;
                 }
 
                 // Trigger Roll from ground (both Shift and Space trigger it)
@@ -112,6 +136,7 @@ public sealed class PlayerInputSystem : IGameSystem
                     player.RollTimer = player.RollDuration;
                     player.RollDirection = player.MovementDirection != Vector2.Zero ? player.MovementDirection : 
                         new Vector2(player.FacingRight ? 1f : -1f, 0f);
+                    player.AttackTimer = 0f; // Cancel any active attack on roll
                 }
             }
 

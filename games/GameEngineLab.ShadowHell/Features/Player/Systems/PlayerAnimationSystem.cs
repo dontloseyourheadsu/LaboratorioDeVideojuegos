@@ -181,6 +181,22 @@ public sealed class PlayerAnimationSystem : IGameSystem
                 torso.LocalAngle = torsoBaseAngle;
             }
 
+            if (player.AttackTimer > 0f)
+            {
+                // Swipe animation: angle starts high/up and swings down/forward
+                float progress = 1f - (player.AttackTimer / player.AttackDuration);
+                float swingAngle = -1.2f + progress * 2.4f; // swings from -1.2 to +1.2 radians
+
+                // Both arms react to attack
+                rArm.LocalAngle = swingAngle;
+                rArm.LocalOffset = rArmBaseOffset + new Vector2(6f, -3f);
+                rFist.LocalOffset = rFistBaseOffset + new Vector2(8f, 0f);
+
+                lArm.LocalAngle = (float)Math.PI + swingAngle * 0.4f;
+                lArm.LocalOffset = lArmBaseOffset + new Vector2(4f, -1f);
+                lFist.LocalOffset = lFistBaseOffset + new Vector2(8f, 0f);
+            }
+
             // 5. Horizontal flip mirroring if facing left (ScaleX logic)
             if (!player.FacingRight)
             {

@@ -21,6 +21,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 
 using GameEngineLab.ShadowHell.Features.Environment.Resources;
+using GameEngineLab.ShadowHell.Features.Enemy.Resources;
 
 namespace GameEngineLab.ShadowHell;
 
@@ -68,6 +69,8 @@ public sealed class ShadowHellGame : Game
             Zoom = 1.0f
         });
 
+        _world.SetResource(new WaveState());
+
         // 2. Setup ECS Schedulers
         // Floor Renderer (runs first under everything)
         _scheduler.AddSystem(new FloorRendererSystem());
@@ -80,6 +83,7 @@ public sealed class ShadowHellGame : Game
 
         // Player input and movement translations
         _scheduler.AddSystem(new PlayerInputSystem());
+        _scheduler.AddSystem(new PlayerAttackSystem());
         _scheduler.AddSystem(new PlayerRendererSystem());
 
         // Physics Sub-stepping (Movement & Collision physics)
@@ -101,6 +105,9 @@ public sealed class ShadowHellGame : Game
 
         // Bullet project updates and rendering
         _scheduler.AddSystem(new BulletSystem());
+
+        // Wave management and spawning
+        _scheduler.AddSystem(new WaveSystem());
 
         // 3. Generate Level (Cavern boundary & rocky pillars)
         GenerateCavernLevel();
@@ -170,39 +177,6 @@ public sealed class ShadowHellGame : Game
             Mass = 0f,
             CollisionGroup = 1
         });
-
-        // Spawn shadow enemies (4 Melee, 3 Ranged)
-        for (int i = 0; i < 7; i++)
-        {
-            Vector2 position;
-            bool ok;
-            int attempts = 0;
-            do
-            {
-                position = new Vector2(random.Next(150, (int)WorldWidth - 150), random.Next(150, (int)WorldHeight - 150));
-                ok = Vector2.Distance(position, new Vector2(WorldWidth / 2f, WorldHeight / 2f)) > 300f;
-                attempts++;
-            } while (!ok && attempts < 100);
-
-            EnemyType type = (i < 4) ? EnemyType.Melee : EnemyType.Ranged;
-            float speed = (type == EnemyType.Melee) ? 65f : 80f;
-
-            var enemy = _world.CreateEntity();
-            _world.SetComponent(enemy, new EnemyComponent(type, speed));
-            _world.SetComponent(enemy, new TransformComponent { Position = position });
-            _world.SetComponent(enemy, new VelocityComponent { Value = Vector2.Zero });
-            _world.SetComponent(enemy, new DrawColorComponent(Color.Black));
-            _world.SetComponent(enemy, new RigidBodyComponent
-            {
-                Shape = RigidBodyShape.Circle,
-                BoundingRadius = 20f,
-                Mass = 1.2f,
-                Restitution = 0.3f,
-                Friction = 0.9f,
-                CollisionGroup = 2, // Shadow enemies (casts shadows!)
-                CollisionMask = 1 | 4 // collides with walls and player
-            });
-        }
 
     }
 
@@ -368,9 +342,35 @@ public sealed class ShadowHellGame : Game
                 // Subtitle
                 _spriteBatch.DrawString(_font, "Android Roguelike Techbed - testing build", new Vector2(30, 60), Color.Gray, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
 
+                // Fetch WaveState
+                int waveNum = 0;
+                int remaining = 0;
+                float nextWaveTimer = 0f;
+                bool isWaveActive = false;
+                if (_world.TryGetResource<WaveState>(out var waveState) && waveState != null)
+                {
+                    waveNum = waveState.CurrentWave;
+                    remaining = waveState.EnemiesRemaining;
+                    nextWaveTimer = waveState.NextWaveTimer;
+                    isWaveActive = waveState.IsWaveActive;
+                }
+
+                // Draw Wave State
+                string waveText = $"WAVE: {waveNum}";
+                string enemiesText = isWaveActive ? $"SHADOWS: {remaining}" : (nextWaveTimer > 0f ? $"NEXT WAVE IN {nextWaveTimer:F1}s" : "PREPARING...");
+                Color waveColor = new Color(220, 120, 255); // Neon violet
+                Color enemiesColor = isWaveActive ? new Color(255, 100, 0) : Color.Yellow * 0.8f;
+
+                // Draw Wave Info
+                _spriteBatch.DrawString(_font, waveText, new Vector2(32, 92), Color.Black * 0.5f, 0f, Vector2.Zero, 1.2f, SpriteEffects.None, 0f);
+                _spriteBatch.DrawString(_font, waveText, new Vector2(30, 90), waveColor, 0f, Vector2.Zero, 1.2f, SpriteEffects.None, 0f);
+
+                _spriteBatch.DrawString(_font, enemiesText, new Vector2(32, 122), Color.Black * 0.5f, 0f, Vector2.Zero, 0.9f, SpriteEffects.None, 0f);
+                _spriteBatch.DrawString(_font, enemiesText, new Vector2(30, 120), enemiesColor, 0f, Vector2.Zero, 0.9f, SpriteEffects.None, 0f);
+
                 // Instructions
-                string controls = "CONTROLS:\nWASD / Arrows - Move\nSpace / Left Shift - Dodge Roll (Smooth Hover)";
-                _spriteBatch.DrawString(_font, controls, new Vector2(30, WindowHeight - 100), Color.LightGray * 0.8f, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+                string controls = "CONTROLS:\nWASD / Arrows - Move\nSpace / Left Shift - Dodge Roll (Smooth Hover)\nF / E / Left Click - Close Range Melee Attack";
+                _spriteBatch.DrawString(_font, controls, new Vector2(30, WindowHeight - 120), Color.LightGray * 0.8f, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
             }
 
             _spriteBatch.End();

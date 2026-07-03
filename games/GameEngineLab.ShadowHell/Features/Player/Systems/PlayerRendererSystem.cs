@@ -126,6 +126,57 @@ public sealed class PlayerRendererSystem : IGameSystem
                 innerGlowColor, 
                 2
             );
+
+            // 3. Draw glowing melee swipe arc if attacking
+            if (player.AttackTimer > 0f)
+            {
+                float progress = 1f - (player.AttackTimer / player.AttackDuration);
+                float attackAngle = (float)Math.Atan2(player.AttackDirection.Y, player.AttackDirection.X);
+                
+                // Sweep angle bounds
+                float startSweep = attackAngle - 1.1f;
+                float endSweep = attackAngle + 1.1f;
+                // Swing direction can depend on facing/movement, here standard clockwise sweep
+                float currentSweep = startSweep + (endSweep - startSweep) * progress;
+
+                int segments = 8;
+                float sweepRadius = body.BoundingRadius + 22f; // extends outward from body
+                Color swipeCore = new Color(220, 120, 255); // Light Violet neon
+                Color swipeGlow = new Color(177, 0, 255);   // Neon Purple
+
+                Vector2 prevPos = Vector2.Zero;
+                for (int i = 0; i <= segments; i++)
+                {
+                    float ratio = (float)i / segments;
+                    float angle = startSweep + (currentSweep - startSweep) * ratio;
+                    Vector2 offset = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * sweepRadius;
+                    Vector2 pos = bodyCenter + offset;
+
+                    if (i > 0)
+                    {
+                        // Draw outer glow segment (thicker, semi-transparent)
+                        ShapeRenderer.DrawLine(
+                            frameContext.SpriteBatch, 
+                            frameContext.DebugPixel, 
+                            prevPos, 
+                            pos, 
+                            swipeGlow * (0.2f + ratio * 0.5f), 
+                            6
+                        );
+
+                        // Draw inner crisp core segment
+                        ShapeRenderer.DrawLine(
+                            frameContext.SpriteBatch, 
+                            frameContext.DebugPixel, 
+                            prevPos, 
+                            pos, 
+                            swipeCore * (0.4f + ratio * 0.6f), 
+                            2
+                        );
+                    }
+                    prevPos = pos;
+                }
+            }
         }
     }
 }
