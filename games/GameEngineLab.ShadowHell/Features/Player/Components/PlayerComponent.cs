@@ -45,6 +45,13 @@ public struct PlayerComponent : IComponent
     public float Health;
     public float MaxHealth;
     public float InvincibilityTimer;
+
+    // Melee attack state
+    public float AttackTimer;
+    public float AttackCooldownTimer;
+    public Vector2 AttackDirection;
+    public float AttackDuration;
+    public float AttackCooldown;
     
     public PlayerComponent()
     {
@@ -74,5 +81,12 @@ public struct PlayerComponent : IComponent
         Health = 2f;
         MaxHealth = 2f;
         InvincibilityTimer = 0f;
+
+        // Attack settings
+        AttackTimer = 0f;
+        AttackCooldownTimer = 0f;
+        AttackDirection = Vector2.Zero;
+        AttackDuration = 0.22f;
+        AttackCooldown = 0.35f;
     }
 }

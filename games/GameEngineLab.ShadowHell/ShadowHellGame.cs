@@ -369,8 +369,8 @@ public sealed class ShadowHellGame : Game
                 _spriteBatch.DrawString(_font, "Android Roguelike Techbed - testing build", new Vector2(30, 60), Color.Gray, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
 
                 // Instructions
-                string controls = "CONTROLS:\nWASD / Arrows - Move\nSpace / Left Shift - Dodge Roll (Smooth Hover)";
-                _spriteBatch.DrawString(_font, controls, new Vector2(30, WindowHeight - 100), Color.LightGray * 0.8f, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+                string controls = "CONTROLS:\nWASD / Arrows - Move\nSpace / Left Shift - Dodge Roll (Smooth Hover)\nF / E / Left Click - Close Range Melee Attack";
+                _spriteBatch.DrawString(_font, controls, new Vector2(30, WindowHeight - 120), Color.LightGray * 0.8f, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
             }
 
             _spriteBatch.End();
