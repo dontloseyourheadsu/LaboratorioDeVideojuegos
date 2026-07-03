@@ -80,6 +80,7 @@ public sealed class ShadowHellGame : Game
 
         // Player input and movement translations
         _scheduler.AddSystem(new PlayerInputSystem());
+        _scheduler.AddSystem(new PlayerAttackSystem());
         _scheduler.AddSystem(new PlayerRendererSystem());
 
         // Physics Sub-stepping (Movement & Collision physics)

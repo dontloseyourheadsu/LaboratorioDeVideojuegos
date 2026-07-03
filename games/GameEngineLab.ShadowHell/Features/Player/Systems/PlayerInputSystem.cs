@@ -122,6 +122,7 @@ public sealed class PlayerInputSystem : IGameSystem
                     player.AttackCooldownTimer = player.AttackCooldown;
                     player.AttackDirection = player.MovementDirection != Vector2.Zero ? player.MovementDirection : 
                         new Vector2(player.FacingRight ? 1f : -1f, 0f);
+                    player.JustAttacked = true;
                 }
 
                 // Trigger Roll from ground (both Shift and Space trigger it)
